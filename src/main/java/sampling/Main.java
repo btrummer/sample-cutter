@@ -35,6 +35,7 @@ public class Main implements ApplicationRunner {
     private int validBits = 0;
 
     private ArrayList<Frame> samples = new ArrayList<>(1024 * 1024);
+    private Peaks peaks;
     private ArrayList<Frame> samplesShadowForLeadIn = new ArrayList<>(1024 * 1024);
     private int channelForZeroCrossingDetection = 0;
     private int peak;
@@ -74,6 +75,7 @@ public class Main implements ApplicationRunner {
                 absThresholdOut = (int) (maxSampleValue * thresholdOutLevel);
 
                 samples.clear();
+                peaks = new Peaks(maxSampleValue);
                 samplesShadowForLeadIn.clear();
                 peak = 0;
                 thresholdInReached = false;
@@ -197,11 +199,14 @@ public class Main implements ApplicationRunner {
                 // Didn't detect anything yet, except "noise".
                 // However, keep the samplesShadowForLeadIn buffer, in case we need it for the next half-wave
                 samples.clear();
+                peaks.clear();
                 return;
             }
 
             thresholdInReached = true;
         }
+
+        peaks.add(peak);
 
         if (Math.abs(peak) < absThresholdOut) {
             thresholdOutReachedCount++;
@@ -216,6 +221,7 @@ public class Main implements ApplicationRunner {
             thresholdInReached = false;
 
             samples.clear();
+            peaks.clear();
             samplesShadowForLeadIn.clear();
         }
     }
@@ -282,9 +288,10 @@ public class Main implements ApplicationRunner {
         int thresholdInDelayFrames = getThresholdInDelayFrames();
 
         String fileName = String.format(
-                "%s_%03d_%05d.wav",
+                "%s_%03d_%06.2f_%05d.wav",
                 currentFile.getName().replace(".wav", ""),
                 fileCount++,
+                peaks.getEffectivePeakValueInDb(),
                 thresholdInDelayFrames
         );
         File targetFile = outputDir != null ? new File(outputDir, fileName) : new File(fileName);
