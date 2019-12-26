@@ -288,11 +288,10 @@ public class Main implements ApplicationRunner {
         int thresholdInDelayFrames = getThresholdInDelayFrames();
 
         String fileName = String.format(
-                "%s_%03d_%06.2f_%05d.wav",
+                "%s_%03d_%07d.wav",
                 currentFile.getName().replace(".wav", ""),
                 fileCount++,
-                peaks.getEffectivePeakValueInDb(),
-                thresholdInDelayFrames
+                peaks.getEffectivePeakValue()
         );
         File targetFile = outputDir != null ? new File(outputDir, fileName) : new File(fileName);
 
